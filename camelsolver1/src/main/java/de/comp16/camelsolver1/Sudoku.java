@@ -41,4 +41,14 @@ public class Sudoku {
 		return values[row][column];
 	}
 
+	public String toString() {
+		String output = "";
+		for (int i = 0; i < values.length; i++) {
+			for (int j = 0; j < values[i].length; j++) {
+				output+=" "+values[i][j];
+			}
+			output+="\n";
+		}
+		return output;
+	}
 }

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.apache.camel.util.CaseInsensitiveMap;
+
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,25 +20,37 @@ public class MessageHandler {
 	
 	public void postMessage(SudokuMessage in_message) {
 		
-		System.out.println(in_message.getInstruction());
-		System.out.println(in_message.getRequest_id());
-		System.out.println(in_message.getSender());
-		System.out.println(in_message.getSudoku().length);
-		for (int i = 0; i < in_message.getSudoku().length; i++) {
-			System.out.printf("%2d", in_message.getSudoku()[i]);
-		}
+//		System.out.println(in_message.getInstruction());
+//		System.out.println(in_message.getRequest_id());
+//		System.out.println(in_message.getSender());
+
 		//TODO Validate message
 		
 		if (in_message.getInstruction().equals("solve")) {
 			Sudoku toSolve = new Sudoku(in_message.getSudoku());
+			System.out.println("[postMessage] Incoming Sudoku:\n"+toSolve.toString());
+			
 			int result = new SudokuSolver().solve(toSolve);
 			//TODO difficulty?
 			
+			switch (result) {
+			case SudokuSolver.ONE:
+				System.out.println("\n[postMessage] Solved!");
+				break;
+			case SudokuSolver.IMPOSSIBLE:
+				System.out.println("\n[postMessage] Impossible!");
+				break;
+			case SudokuSolver.MANY:
+				System.out.println("\n[postMessage] Multiple Solutions!");
+				break;
+			}
+			System.out.println("[postMessage] Resulting Sudoku:\n"+toSolve.toString());
+
 			SudokuMessage answer = new SudokuMessage();
 			answer.setRequest_id(in_message.getRequest_id());
 			answer.setSudoku(toSolve.getValuesAsArray());
 			answer.setInstruction(SOLVE_INSTRUCTION[result]);
-			sendMessage(answer);		
+			sendMessage(answer);
 			
 		} else if (in_message.getInstruction()=="ping") {
 			SudokuMessage answer = new SudokuMessage();
@@ -49,11 +63,12 @@ public class MessageHandler {
 
 	public void sendMessage(SudokuMessage out_message) {
 		out_message.setSender(OWN_URI);
-		
-		System.out.println(out_message.toString());
+
+
 		//TODO: Send message to broker
 		
 		//TEMP: Ausgabe auf Konsole und in Datei
+		System.out.println("[sendMessage] sending: ");
 		String nowAsISO = ZonedDateTime.now().format( DateTimeFormatter.ISO_INSTANT ).replace(':', '-');
 		
 		ObjectMapper mapper = new ObjectMapper();
