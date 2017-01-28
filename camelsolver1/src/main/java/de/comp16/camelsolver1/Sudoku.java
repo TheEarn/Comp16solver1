@@ -12,7 +12,7 @@ public class Sudoku {
 		}
 	}
 
-	private int[][] values;
+	private int[][] values = new int[9][9];
 
 	public int[][] getValues() {
 		return values;

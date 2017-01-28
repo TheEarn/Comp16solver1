@@ -9,22 +9,28 @@ public class SudokuSolver {
 	public static final int ONE = 1;
 	public static final int MANY = 2;
 	
+	private Sudoku startSudoku;
 	private int[][] current_values = new int[9][9];
 	private boolean solved = false;
 	
-	public int solve(Sudoku sudoku) {
+	public SudokuSolver(Sudoku sudoku) {
+		this.current_values = sudoku.getValues();
+		this.startSudoku = new Sudoku(current_values);
+	}
+	
+	public Sudoku getCurrentSudoku() {
+		return new Sudoku(current_values);
+	}
+
+	public int solve() {
+		if (startSudoku == null) throw new RuntimeException("solve: no Sudoku given");
+		if (numberGivenCells(startSudoku) < 17) return MANY;
 		
-		if (numberGivenCells(sudoku) < 17) return MANY;
-		
-		current_values = sudoku.getValues();
-		
+		current_values = startSudoku.getValues();
 		int[] startingCell = fewestCandidates();
 		if (!solved) fillCell(startingCell[0], startingCell[1], 0);
 
-		if (numberDifferentDigits(sudoku) < 8 && solved) return MANY;
-		
-		sudoku = new Sudoku(current_values);
-		
+		if (numberDifferentDigits(startSudoku) < 8 && solved) return MANY;
 		if (solved) return ONE;
 		else return IMPOSSIBLE;
 	}
@@ -86,7 +92,7 @@ public class SudokuSolver {
 	}
 
 	Set<Integer> possibleAt(int x, int y) {
-		return possibleInBlock(x, y, possibleInCol(y, possibleInRow(x) ));
+		return possibleInBlock(x, y, possibleInCol(y, possibleInRow(x)));
 	}
 	
 	Set<Integer> possibleInCol(int y) {

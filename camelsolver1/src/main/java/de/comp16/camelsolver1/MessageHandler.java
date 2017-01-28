@@ -30,7 +30,9 @@ public class MessageHandler {
 			Sudoku toSolve = new Sudoku(in_message.getSudoku());
 			System.out.println("[postMessage] Incoming Sudoku:\n"+toSolve.toString());
 			
-			int result = new SudokuSolver().solve(toSolve);
+			SudokuSolver solver = new SudokuSolver(toSolve);
+			int result = solver.solve();
+			Sudoku solvedSudoku = solver.getCurrentSudoku();
 			//TODO difficulty?
 			
 			switch (result) {
@@ -44,11 +46,11 @@ public class MessageHandler {
 				System.out.println("\n[postMessage] Multiple Solutions!");
 				break;
 			}
-			System.out.println("[postMessage] Resulting Sudoku:\n"+toSolve.toString());
+			System.out.println("[postMessage] Resulting Sudoku:\n"+solvedSudoku.toString());
 
 			SudokuMessage answer = new SudokuMessage();
 			answer.setRequest_id(in_message.getRequest_id());
-			answer.setSudoku(toSolve.getValuesAsArray());
+			answer.setSudoku(solvedSudoku.getValuesAsArray());
 			answer.setInstruction(SOLVE_INSTRUCTION[result]);
 			sendMessage(answer);
 			
