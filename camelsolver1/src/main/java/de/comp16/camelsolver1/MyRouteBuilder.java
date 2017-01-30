@@ -5,22 +5,25 @@ import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
 
 /**
- * A Camel Java DSL Router
+ * RouteBuilder specifying Camel routes for Components 2016s Solver1
+ * @see MessageHandler
+ * @author Felix Steinmeier
+ * @author Carina Krämer
  */
 public class MyRouteBuilder extends RouteBuilder {
 
     /**
-     * Let's configure the Camel routing rules using Java code...
+     * Camel routes for Components 2016s Solver1
+     * TODO: test receiving & implement sending via rest
      */
     public void configure() {
 
-        // here is a sample which processes the input files
-        // (leaving them in place - see the 'noop' flag)
-        // then performs content based routing on the message using XPath
+        // Reading files from src/data, binding JSON to SudokuMessage-POJO
         from("file:src/data?noop=true")
         	.log("Got file: ${body}")
         	.unmarshal().json(JsonLibrary.Jackson, SudokuMessage.class)
         	.to("direct:handle");
+        
         
         restConfiguration().component("undertow")
 	        // use json binding mode so Camel automatic binds json <--> pojo
@@ -32,9 +35,11 @@ public class MyRouteBuilder extends RouteBuilder {
 	        // setup context path on localhost and port number that undertow will use
 	        .contextPath("/").host("localhost").port(8080);
         
+        // Receiving messages via REST
         rest("/rest_api")
 	        .post("/solve").consumes("application/json").type(SudokuMessage.class).to("direct:handle");
-	
+
+        // Passing SudokuMessage to new MessageHandler
 	    from("direct:handle")
 	    	.log("Got ${body}")
 	    	.bean(MessageHandler.class, "postMessage");

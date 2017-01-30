@@ -1,5 +1,10 @@
 package de.comp16.camelsolver1;
 
+/**
+ * Class representing a sudoku, i.e. a 9x9 array of integers [0-9] with 0 denoting a not yet filled cell.
+ * @author Felix Steinmeier
+ * @author Carina Krämer *
+ */
 public class Sudoku {
 	
 	public Sudoku(int[][] values) {

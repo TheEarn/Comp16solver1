@@ -2,7 +2,12 @@ package de.comp16.camelsolver1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
+/**
+ * Class representing a message used for communicating between members of Components 2016;<br>
+ * Modeling the format described in format.md
+ * @author Felix Steinmeier
+ * @author Carina Krämer
+ */
 public class SudokuMessage {
 
 	@JsonProperty("request-id")

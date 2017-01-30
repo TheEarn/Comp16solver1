@@ -3,7 +3,9 @@ package de.comp16.camelsolver1;
 import org.apache.camel.main.Main;
 
 /**
- * A Camel Application
+ * Main Camel app for Components 2016s Solver1
+ * @author Felix Steinmeier
+ * @author Carina Krämer
  */
 public class MainApp {
 

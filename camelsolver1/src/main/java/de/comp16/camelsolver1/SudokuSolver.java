@@ -3,6 +3,14 @@ package de.comp16.camelsolver1;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Provides sudoku solving functionality.<br>
+ * Used by MessageHandler to determine the number of possible solutions (none, one, many) and 
+ * - if applicable - to provide an admissible solution.
+ * @see MessageHandler
+ * @author Felix Steinmeier
+ * @author Carina Krämer
+ */
 public class SudokuSolver {
 	
 	public static final int IMPOSSIBLE = 0;
@@ -18,15 +26,23 @@ public class SudokuSolver {
 		this.startSudoku = new Sudoku(current_values);
 	}
 	
+	/**
+	 * Returns a new object containing the current Sudoku.<br>
+	 * Provides the solution if solve() returned ONE or the last state of calculations, otherwise.
+	 * @return The current Sudoku
+	 */
 	public Sudoku getCurrentSudoku() {
 		return new Sudoku(current_values);
 	}
 
+	/**
+	 * Attempts to solve the previously given sudoku
+	 * @return An int indicating one, many or no possible solutions 
+	 */
 	public int solve() {
 		if (startSudoku == null) throw new RuntimeException("solve: no Sudoku given");
 		if (numberGivenCells(startSudoku) < 17) return MANY;
 		
-		current_values = startSudoku.getValues();
 		int[] startingCell = fewestCandidates();
 		if (!solved) fillCell(startingCell[0], startingCell[1], 0);
 
@@ -35,6 +51,11 @@ public class SudokuSolver {
 		else return IMPOSSIBLE;
 	}
 	
+	/**
+	 * Returns the number of given cells in the provided sudoku, i.e. the number of cells not containing 0.
+	 * @param sudoku the sudoku
+	 * @return number of given cells
+	 */
 	public int numberGivenCells(Sudoku sudoku) {
 		int nrGivenCells = 0;
 		for (int digit : sudoku.getValuesAsArray()) {
@@ -43,6 +64,11 @@ public class SudokuSolver {
 		return nrGivenCells;
 	}
 	
+	/**
+	 * Returns the number of different digits between 1 and 9 (incl.) given in the provided sudoku.
+	 * @param sudoku the sudoku
+	 * @return number of different digits
+	 */
 	public int numberDifferentDigits(Sudoku sudoku) {
 		Set<Integer> givenDigits = new HashSet<Integer>();
 		for (int digit : sudoku.getValuesAsArray()) {
@@ -52,6 +78,12 @@ public class SudokuSolver {
 	}
 
 	//Füllt das Feld (x,y) nacheinander mit allen möglichen Kandidaten und ruft sich rekursiv selbst auf
+	/**
+	 * Fills cell (x,y) of current sudoku with all possible candidates successively and calls itself recursively
+	 * @param x Row index of specified cell
+	 * @param y Column index of specified cell
+	 * @param recursionLevel Recursion depth (used for formatted output only)
+	 */
 	private void fillCell(int x, int y, int recursionLevel) {
 		if (solved) return;
 		Set<Integer> candidates = possibleAt(x, y);
@@ -71,6 +103,13 @@ public class SudokuSolver {
 	
 	//Liefert den Punkt {x,y} zurück, an welchem die wenigsten Zahlen einsetzbar sind
 	// - oder {-1,-1}, falls keine mehr einsetzbar ist
+	/**
+	 * Provides the first cell {x,y} (respective to x,y-ordering) which 
+	 * allows the fewest candidates to be filled in.<br>
+	 * If there are no possible candidates {-1,-1} is returned;
+	 *  in this case the <em>current</em> sudoku is either completely solved or unsolvable.
+	 * @return An int[2] representing the cell (x,y)
+	 */
 	private int[] fewestCandidates() {
 		int[] coords = {-1, -1};
 		int smallestNumber = Integer.MAX_VALUE;
@@ -91,6 +130,13 @@ public class SudokuSolver {
 		return coords;
 	}
 
+	/**
+	 * Returns an array of Integers representing all values between 1 and 9 (incl.)
+	 * 	which may be filled in given cell (x,y) according to standard sudoku rules.
+	 * @param x Row index of specified cell
+	 * @param y Column index of specified cell
+	 * @return The allowed values
+	 */
 	Set<Integer> possibleAt(int x, int y) {
 		return possibleInBlock(x, y, possibleInCol(y, possibleInRow(x)));
 	}

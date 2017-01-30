@@ -5,12 +5,16 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import org.apache.camel.util.CaseInsensitiveMap;
-
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Handles messages for Components 2016s Solver1.
+ * 
+ * @author Felix Steinmeier
+ * @author Carina Krämer
+ */
 public class MessageHandler {
 	
 	public static final String OWN_URI = "http://localhost:8080/rest_api/solve?httpMethodRestrict=POST";
@@ -18,6 +22,10 @@ public class MessageHandler {
 	public static final String[] SOLVE_INSTRUCTION= new String[]{"solved:impossible","solved:one","solved:many"};
 	
 	
+	/**
+	 * Processes a received message in the form of a SudokuMessage POJO.
+	 * @param in_message Received message
+	 */
 	public void postMessage(SudokuMessage in_message) {
 		
 //		System.out.println(in_message.getInstruction());
