@@ -17,6 +17,8 @@ public class SudokuSolver {
 	public static final int ONE = 1;
 	public static final int MANY = 2;
 	
+	public static final int DEBUGLEVEL = 9001;
+	
 	private Sudoku startSudoku;
 	private int[][] current_values = new int[9][9];
 	private boolean solved = false;
@@ -85,18 +87,18 @@ public class SudokuSolver {
 	 * @param recursionLevel Recursion depth (used for formatted output only)
 	 */
 	private void fillCell(int x, int y, int recursionLevel) {
-		if (solved) return;
 		Set<Integer> candidates = possibleAt(x, y);
 //		System.out.println("[fillCell] candidates: "+candidates+" for cell ("+x+","+y+")");
 		for (int candidate : candidates) {
-			if (recursionLevel < 9001) {
+			if (recursionLevel < DEBUGLEVEL) {
 				System.out.print("[fillCell] "+new String(new char[recursionLevel]).replace("\0", "-"));
 				System.out.println("candidates for cell ("+x+","+y+"): "+candidates+" -trying "+candidate);
 			}
 			current_values[x][y] = candidate;
 			int[] nextCell = fewestCandidates();
 //			System.out.println("[fillCell] next cell: ("+nextCell[0]+","+nextCell[1]+")");
-			if (nextCell[0] != -1) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
+//			if (nextCell[0] != -1) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
+			if (!solved) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
 			if (!solved) current_values[x][y] = 0;
 		}
 	}
@@ -111,7 +113,7 @@ public class SudokuSolver {
 	 * @return An int[2] representing the cell (x,y)
 	 */
 	private int[] fewestCandidates() {
-		int[] coords = {-1, -1};
+		int[] coords =new int[2];
 		int smallestNumber = Integer.MAX_VALUE;
 		for (int i = 0; i < current_values.length; i++) {
 			for (int j = 0; j < current_values[i].length; j++) {

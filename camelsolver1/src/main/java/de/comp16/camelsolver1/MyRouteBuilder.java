@@ -44,6 +44,12 @@ public class MyRouteBuilder extends RouteBuilder {
 	    	.log("Got ${body}")
 	    	.bean(MessageHandler.class, "postMessage");
 //	    	.to("bean:messageHandler?method=postMessage");
+	    
+	    from("direct:out")
+	    	.marshal().json(JsonLibrary.Jackson)
+	    	.to("file:var/out_messages")
+//	    	.to(MessageHandler.BROKER_URI) // !UNCOMMENT THIS FOR ACTUAL SENDING! TODO: Timeout-Handling
+	    	;
 
     }
 

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.apache.camel.EndpointInject;
+import org.apache.camel.ProducerTemplate;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +23,8 @@ public class MessageHandler {
 	public static final String BROKER_URI = "rabbitmq://136.199.51.111/inExchange?username=kompo&password=kompo&skipQueueDeclare=true";
 	public static final String[] SOLVE_INSTRUCTION= new String[]{"solved:impossible","solved:one","solved:many"};
 	
+	@EndpointInject(uri="direct:out")
+	ProducerTemplate outTemplate;
 	
 	/**
 	 * Processes a received message in the form of a SudokuMessage POJO.
@@ -71,27 +75,34 @@ public class MessageHandler {
 		}
 	}
 
+	public static SudokuMessage registerAtBroker(boolean registering) {
+		SudokuMessage registerMessage = new SudokuMessage();
+		registerMessage.setRequest_id(java.util.UUID.randomUUID().toString());
+		registerMessage.setSudoku(new int[81]);
+		registerMessage.setInstruction(registering? "register:solver" : "unregister:solver");
+		registerMessage.setSender(OWN_URI);
+		return registerMessage;
+	}
+	
 	public void sendMessage(SudokuMessage out_message) {
 		out_message.setSender(OWN_URI);
 
+		//Send message to broker
+		outTemplate.sendBody(out_message);
 
-		//TODO: Send message to broker
-		
-		//TEMP: Ausgabe auf Konsole und in Datei
+		//TEMP: Ausgabe auf Konsole
 		System.out.println("[sendMessage] sending: ");
 		String nowAsISO = ZonedDateTime.now().format( DateTimeFormatter.ISO_INSTANT ).replace(':', '-');
-		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			// Convert object to JSON string and save into a file directly
-			File newdir = new File("var/out_messages");
-			newdir.mkdirs();
-			mapper.writeValue(new File("var/out_messages/message"+nowAsISO+".json"), out_message);
+//			File newdir = new File("var/out_messages");
+//			newdir.mkdirs();
+//			mapper.writeValue(new File("var/out_messages/message"+nowAsISO+".json"), out_message);
 
 			// Convert object to JSON string and pretty print
 			String jsonInString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(out_message);
 			System.out.println(jsonInString);
-
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
