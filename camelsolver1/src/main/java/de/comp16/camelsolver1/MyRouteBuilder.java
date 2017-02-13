@@ -33,7 +33,7 @@ public class MyRouteBuilder extends RouteBuilder {
 	        // and output using pretty print
 	        .dataFormatProperty("prettyPrint", "true")
 	        // setup context path on localhost and port number that undertow will use
-	        .contextPath("/").host("localhost").port(8080);
+	        .contextPath("/").host("136.199.51.110").port(8080);
         
         // Receiving messages via REST
         rest("/rest_api")
@@ -48,7 +48,7 @@ public class MyRouteBuilder extends RouteBuilder {
 	    from("direct:out")
 	    	.marshal().json(JsonLibrary.Jackson)
 	    	.to("file:var/out_messages")
-//	    	.to(MessageHandler.BROKER_URI) // !UNCOMMENT THIS FOR ACTUAL SENDING! TODO: Timeout-Handling
+	    	.to(MessageHandler.BROKER_URI) // !UNCOMMENT THIS FOR ACTUAL SENDING! TODO: Timeout-Handling
 	    	;
 
     }
