@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class MessageHandler {
 	
-	public static final String OWN_URI = "http://136.199.51.110:8080/rest_api/solve?httpMethodRestrict=POST";
+	public static final String OWN_URI = "restlet://136.199.51.110:8080/rest_api/solve?restletMethods=post";
 	public static final String BROKER_URI = "rabbitmq://136.199.51.111/inExchange?username=kompo&password=kompo&skipQueueDeclare=true&exchangeType=fanout&autoDelete=false";
 	public static final String[] SOLVE_INSTRUCTION= new String[]{"solved:impossible","solved:one","solved:many"};
 	
