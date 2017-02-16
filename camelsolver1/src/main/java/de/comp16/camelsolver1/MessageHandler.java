@@ -39,6 +39,10 @@ public class MessageHandler {
 
 		String nowAsISO = ZonedDateTime.now().format( DateTimeFormatter.ISO_INSTANT ).replace(':', '-');
 
+		if (in_message == null) {
+			System.out.println("[MessageHandler] Incoming Message (at "+nowAsISO+") IS NULL!");
+			return;
+		}
 		//TODO Validate message
 		if (in_message.getInstruction() == null || in_message.getRequest_id() == null || 
 				in_message.getSender() == null || in_message.getSudoku() == null ) {
