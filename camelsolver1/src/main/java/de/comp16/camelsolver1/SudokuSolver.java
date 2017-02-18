@@ -3,6 +3,8 @@ package de.comp16.camelsolver1;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.comp16.camelsolver1.Sudoku.InvalidSudokuException;
+
 /**
  * Provides sudoku solving functionality.<br>
  * Used by MessageHandler to determine the number of possible solutions (none, one, many) and 
@@ -20,12 +22,18 @@ public class SudokuSolver {
 	public static final int DEBUGLEVEL = 9001;
 	
 	private Sudoku startSudoku;
-	private int[][] current_values = new int[9][9];
+	private int[][] current_values;
+	private int size;
 	private boolean solved = false;
 	
 	public SudokuSolver(Sudoku sudoku) {
 		this.current_values = sudoku.getValues();
-		this.startSudoku = new Sudoku(current_values);
+		try {
+			this.startSudoku = new Sudoku(current_values);
+			this.size = startSudoku.getSize();
+		} catch (InvalidSudokuException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -34,7 +42,12 @@ public class SudokuSolver {
 	 * @return The current Sudoku
 	 */
 	public Sudoku getCurrentSudoku() {
-		return new Sudoku(current_values);
+		try {
+			return new Sudoku(current_values);
+		} catch (InvalidSudokuException e) {
+			e.printStackTrace();
+			return null; // this should never happen
+		}
 	}
 
 	/**
@@ -43,12 +56,12 @@ public class SudokuSolver {
 	 */
 	public int solve() {
 		if (startSudoku == null) throw new RuntimeException("solve: no Sudoku given");
-		if (numberGivenCells(startSudoku) < 17) return MANY;
+		if (size == 9 && numberGivenCells(startSudoku) < 17) return MANY;
 		
 		int[] startingCell = fewestCandidates();
 		if (!solved) fillCell(startingCell[0], startingCell[1], 0);
 
-		if (numberDifferentDigits(startSudoku) < 8 && solved) return MANY;
+		if (numberDifferentDigits(startSudoku) < size-1 && solved) return MANY;
 		if (solved) return ONE;
 		else return IMPOSSIBLE;
 	}
@@ -58,7 +71,7 @@ public class SudokuSolver {
 	 * @param sudoku the sudoku
 	 * @return number of given cells
 	 */
-	public int numberGivenCells(Sudoku sudoku) {
+	public static int numberGivenCells(Sudoku sudoku) {
 		int nrGivenCells = 0;
 		for (int digit : sudoku.getValuesAsArray()) {
 			if (digit != 0) nrGivenCells++;
@@ -67,11 +80,11 @@ public class SudokuSolver {
 	}
 	
 	/**
-	 * Returns the number of different digits between 1 and 9 (incl.) given in the provided sudoku.
+	 * Returns the number of different digits given in the provided sudoku.
 	 * @param sudoku the sudoku
 	 * @return number of different digits
 	 */
-	public int numberDifferentDigits(Sudoku sudoku) {
+	public static int numberDifferentDigits(Sudoku sudoku) {
 		Set<Integer> givenDigits = new HashSet<Integer>();
 		for (int digit : sudoku.getValuesAsArray()) {
 			if (digit != 0) givenDigits.add(new Integer(digit));
@@ -133,7 +146,7 @@ public class SudokuSolver {
 	}
 
 	/**
-	 * Returns an array of Integers representing all values between 1 and 9 (incl.)
+	 * Returns an array of Integers representing all values between 1 and size of the sudoku (incl.)
 	 * 	which may be filled in given cell (x,y) according to standard sudoku rules.
 	 * @param x Row index of specified cell
 	 * @param y Column index of specified cell
@@ -145,13 +158,13 @@ public class SudokuSolver {
 	
 	Set<Integer> possibleInCol(int y) {
 		Set<Integer> allowed = new HashSet<Integer>();
-		for (int i = 1; i < 10; i++) {
+		for (int i = 1; i <= size; i++) {
 			allowed.add(new Integer(i));
 		}
 		return possibleInCol(y, allowed);
 	}
 	Set<Integer> possibleInCol(int y, Set<Integer> allowed) {
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < size; i++) {
 			if (current_values[i][y] != 0) allowed.remove(new Integer(current_values[i][y]));
 		}
 		return allowed;
@@ -159,13 +172,13 @@ public class SudokuSolver {
 	
 	Set<Integer> possibleInRow(int x) {
 		Set<Integer> allowed = new HashSet<Integer>();
-		for (int i = 1; i < 10; i++) {
+		for (int i = 1; i <= size; i++) {
 			allowed.add(new Integer(i));
 		}
 		return possibleInRow(x, allowed);
 	}
 	Set<Integer> possibleInRow(int x, Set<Integer> allowed) {
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < size; i++) {
 			if (current_values[x][i] != 0) allowed.remove(new Integer(current_values[x][i]));
 		}
 		return allowed;
@@ -173,14 +186,15 @@ public class SudokuSolver {
 	
 	Set<Integer> possibleInBlock(int x, int y) {
 		Set<Integer> allowed = new HashSet<Integer>();
-		for (int i = 1; i < 10; i++) {
+		for (int i = 1; i <= size; i++) {
 			allowed.add(new Integer(i));
 		}
 		return possibleInBlock(x, y, allowed);
 	}
 	Set<Integer> possibleInBlock(int x, int y, Set<Integer> allowed) {
-		for (int i = Math.floorDiv(x, 3)*3; i < (Math.floorDiv(x, 3)*3)+3; i++) {
-			for (int j = Math.floorDiv(y, 3)*3; j < (Math.floorDiv(y, 3)*3)+3; j++) {
+		int bSize = (int) Math.sqrt(size);
+		for (int i = Math.floorDiv(x, bSize)*bSize; i < (Math.floorDiv(x, bSize)*bSize)+bSize; i++) {
+			for (int j = Math.floorDiv(y, bSize)*bSize; j < (Math.floorDiv(y, bSize)*bSize)+bSize; j++) {
 				if (current_values[i][j] != 0) allowed.remove(new Integer(current_values[i][j]));
 			}
 		}

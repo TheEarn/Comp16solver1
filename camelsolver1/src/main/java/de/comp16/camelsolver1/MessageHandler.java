@@ -1,7 +1,5 @@
 package de.comp16.camelsolver1;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -12,6 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.comp16.camelsolver1.Sudoku.InvalidSudokuException;
+
 /**
  * Handles messages for Components 2016s Solver1.
  * 
@@ -20,8 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class MessageHandler {
 	
-	public static final String OWN_URI = "restlet:http://136.199.51.110:8080/rest_api/solve?restletMethod=post";
-	public static final String BROKER_URI = "rabbitmq://136.199.51.111/inExchange?username=kompo&password=kompo&skipQueueDeclare=true&exchangeType=fanout&autoDelete=false";
 	public static final String[] SOLVE_INSTRUCTION= new String[]{"solved:impossible","solved:one","solved:many"};
 	
 	@EndpointInject(uri="direct:out")
@@ -33,28 +31,27 @@ public class MessageHandler {
 	 */
 	public void postMessage(SudokuMessage in_message) {
 		
-//		System.out.println(in_message.getInstruction());
-//		System.out.println(in_message.getRequest_id());
-//		System.out.println(in_message.getSender());
-
 		String nowAsISO = ZonedDateTime.now().format( DateTimeFormatter.ISO_INSTANT ).replace(':', '-');
-
 		if (in_message == null) {
-			System.out.println("[MessageHandler] Incoming Message (at "+nowAsISO+") IS NULL!");
+			System.out.println("[MessageHandler] Incoming Message (at "+nowAsISO+") IS NULL! (JSON->POJO binding failed)");
 			return;
 		}
-		//TODO Validate message
 		if (in_message.getInstruction() == null || in_message.getRequest_id() == null || 
 				in_message.getSender() == null || in_message.getSudoku() == null ) {
-			System.out.println("[MessageHandler] Incoming Message (at "+nowAsISO+") INVALID!");
+			System.out.println("[MessageHandler] Incoming Message (at "+nowAsISO+") INVALID! (missing field)");
 			return;
 		}
-
 		System.out.println("[MessageHandler] Incoming Message (at "+nowAsISO+"):");
 		printMessage(in_message);
 		
 		if (in_message.getInstruction().equals("solve")) {
-			Sudoku toSolve = new Sudoku(in_message.getSudoku());
+			Sudoku toSolve;
+			try {
+				toSolve = new Sudoku(in_message.getSudoku());
+			} catch (InvalidSudokuException e) {
+				e.printStackTrace();
+				return;
+			}
 			System.out.println("[MessageHandler] Incoming Sudoku:\n"+toSolve.toString());
 			
 			SudokuSolver solver = new SudokuSolver(toSolve);
@@ -95,12 +92,12 @@ public class MessageHandler {
 		registerMessage.setRequest_id(java.util.UUID.randomUUID().toString());
 		registerMessage.setSudoku(new int[81]);
 		registerMessage.setInstruction(registering? "register:solver" : "unregister:solver");
-		registerMessage.setSender(OWN_URI);
+		registerMessage.setSender(MyRouteBuilder.OWN_URI);
 		return registerMessage;
 	}
 	
 	public void sendMessage(SudokuMessage out_message) {
-		out_message.setSender(OWN_URI);
+		out_message.setSender(MyRouteBuilder.OWN_URI);
 		
 		String nowAsISO = ZonedDateTime.now().format( DateTimeFormatter.ISO_INSTANT ).replace(':', '-');
 		System.out.println("[sendMessage] Sending Message (at "+nowAsISO+"):");

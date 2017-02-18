@@ -12,6 +12,11 @@ import org.apache.camel.model.rest.RestBindingMode;
  */
 public class MyRouteBuilder extends RouteBuilder {
 
+	public static final String OWN_HOST = "localhost"; //136.199.51.110
+	public static final String OWN_PORT = "8080";	
+	public static final String OWN_URI = "restlet:http://"+OWN_HOST+":"+OWN_PORT+"/rest_api/solve?restletMethod=post";
+	public static final String BROKER_URI = "rabbitmq://136.199.51.111/inExchange?username=kompo&password=kompo&skipQueueDeclare=true&exchangeType=fanout&autoDelete=false";
+
     /**
      * Camel routes for Components 2016s Solver1
      * TODO: test receiving & implement sending via rest
@@ -35,7 +40,7 @@ public class MyRouteBuilder extends RouteBuilder {
 	        // and output using pretty print
 	        .dataFormatProperty("prettyPrint", "true")
 	        // setup context path on localhost and port number that undertow will use
-	        .contextPath("/").host("136.199.51.110").port(8080);
+	        .contextPath("/").host(OWN_HOST).port(OWN_PORT);
         
         // Receiving messages via REST
         rest("/rest_api")
@@ -52,7 +57,7 @@ public class MyRouteBuilder extends RouteBuilder {
 	    from("direct:out")
 	    	.marshal().json(JsonLibrary.Jackson)
 	    	.to("file:var/out_messages")
-	    	.to(MessageHandler.BROKER_URI) // !UNCOMMENT THIS FOR ACTUAL SENDING! TODO: Timeout-Handling
+//	    	.to(BROKER_URI) // !UNCOMMENT THIS FOR ACTUAL SENDING! TODO: Timeout-Handling
 	    	;
 
     }
