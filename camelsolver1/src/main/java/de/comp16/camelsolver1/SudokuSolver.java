@@ -1,6 +1,7 @@
 package de.comp16.camelsolver1;
 
 import java.util.HashSet;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import de.comp16.camelsolver1.Sudoku.InvalidSudokuException;
@@ -19,12 +20,13 @@ public class SudokuSolver {
 	public static final int ONE = 1;
 	public static final int MANY = 2;
 	
-	public static final int DEBUGLEVEL = 9001;
+	public static final int DEBUGLEVEL = 5;
 	
 	private Sudoku startSudoku;
 	private int[][] current_values;
 	private int size;
 	private boolean solved = false;
+
 	
 	public SudokuSolver(Sudoku sudoku) {
 		this.current_values = sudoku.getValues();
@@ -58,10 +60,10 @@ public class SudokuSolver {
 		if (startSudoku == null) throw new RuntimeException("solve: no Sudoku given");
 		if (size == 9 && numberGivenCells(startSudoku) < 17) return MANY;
 		
-		int[] startingCell = fewestCandidates();
-		if (!solved) fillCell(startingCell[0], startingCell[1], 0);
+		Candidates startingCandidates = new Candidates();
+		if (!solved) fillCell(startingCandidates, 0);
 
-		if (numberDifferentDigits(startSudoku) < size-1 && solved) return MANY;
+		if (solved && numberDifferentDigits(startSudoku) < size-1) return MANY;
 		if (solved) return ONE;
 		else return IMPOSSIBLE;
 	}
@@ -99,30 +101,32 @@ public class SudokuSolver {
 	 * @param y Column index of specified cell
 	 * @param recursionLevel Recursion depth (used for formatted output only)
 	 */
-	private void fillCell(int x, int y, int recursionLevel) {
-		Set<Integer> candidates = possibleAt(x, y);
+	private void fillCell(Candidates candidates, int recursionLevel) {
+		int x = candidates.getFewestCandidatesCell()[0];
+		int y = candidates.getFewestCandidatesCell()[1];
+		Set<Integer> currentCandidates = new HashSet<Integer>();
+		currentCandidates.addAll(candidates.getCandidates(x, y));
 //		System.out.println("[fillCell] candidates: "+candidates+" for cell ("+x+","+y+")");
-		for (int candidate : candidates) {
+		for (int currentCandidate : currentCandidates) {
 			if (recursionLevel < DEBUGLEVEL) {
 				System.out.print("[fillCell] "+new String(new char[recursionLevel]).replace("\0", "-"));
-				System.out.println("candidates for cell ("+x+","+y+"): "+candidates+" -trying "+candidate);
+				System.out.println("candidates for cell ("+x+","+y+"): "+currentCandidates+" -trying "+currentCandidate);
 			}
-			current_values[x][y] = candidate;
-			int[] nextCell = fewestCandidates();
+			current_values[x][y] = currentCandidate;
+			Candidates newCandidates = new Candidates(candidates);
+			newCandidates.removeCandidates(x, y, currentCandidate);
 //			System.out.println("[fillCell] next cell: ("+nextCell[0]+","+nextCell[1]+")");
 //			if (nextCell[0] != -1) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
-			if (!solved) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
+			if (!solved) fillCell(newCandidates, recursionLevel+1);
 			if (!solved) current_values[x][y] = 0;
 		}
 	}
 	
 	//Liefert den Punkt {x,y} zurück, an welchem die wenigsten Zahlen einsetzbar sind
-	// - oder {-1,-1}, falls keine mehr einsetzbar ist
 	/**
 	 * Provides the first cell {x,y} (respective to x,y-ordering) which 
 	 * allows the fewest candidates to be filled in.<br>
-	 * If there are no possible candidates {-1,-1} is returned;
-	 *  in this case the <em>current</em> sudoku is either completely solved or unsolvable.
+	 * If there are no possible candidates the <em>current</em> sudoku is either completely solved or unsolvable.
 	 * @return An int[2] representing the cell (x,y)
 	 */
 	private int[] fewestCandidates() {
@@ -200,5 +204,106 @@ public class SudokuSolver {
 		}
 		return allowed;
 	}
-	
+
+	class Candidates {
+		
+		private Set<Integer>[][] candidateArray;
+		private int[] currentFewestCandidates;
+//		private int emptyCells = 0;
+
+		public Candidates() {
+//			this.emptyCells = size*size;
+			this.candidateArray = (Set<Integer>[][]) new HashSet[size][size];
+			int smallestNumber = Integer.MAX_VALUE;
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {
+					if (current_values[i][j] == 0) {
+						candidateArray[i][j] = possibleAt(i, j);
+						if (candidateArray[i][j].size() < smallestNumber) {
+							smallestNumber = candidateArray[i][j].size();
+							currentFewestCandidates = new int[]{i,j};
+						}
+					} else {
+						candidateArray[i][j] = new HashSet<Integer>();
+//						emptyCells++;
+					}
+				}
+			}
+			
+		}
+		public Candidates(Candidates toCopy) {
+			this.candidateArray = (Set<Integer>[][]) new HashSet[size][size];
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {
+					this.candidateArray[i][j] = new HashSet<Integer>();
+					this.candidateArray[i][j].addAll(toCopy.getCandidates(i, j));
+				}
+			}
+//			this.candidateArray = toCopy.getCandidateArray().clone();
+			this.currentFewestCandidates = toCopy.getFewestCandidatesCell().clone();
+//			this.emptyCells = toCopy.emptyCells;
+		}
+
+//		public int getEmptyCells() {
+//			return emptyCells;
+//		}
+		public Set<Integer>[][] getCandidateArray() {
+			return candidateArray;
+		}
+		public int[] getFewestCandidatesCell() {
+			return currentFewestCandidates;
+		}
+		public int getSmallestNumber() {
+			return candidateArray[currentFewestCandidates[0]][currentFewestCandidates[1]].size();
+		}
+		public Set<Integer> getCandidates(int x, int y) {
+			return candidateArray[x][y];
+		}
+		
+		public void removeCandidates(int x, int y, int value) {
+			candidateArray[x][y] = new HashSet<Integer>();
+			boolean wasEmpty;
+			for (int i = 0; i < size; i++) {
+//				wasEmpty = (candidateArray[x][i].size() == 0);
+				candidateArray[x][i].remove(new Integer(value));
+				if (candidateArray[x][i].size() > 0 && candidateArray[x][i].size() < getSmallestNumber()) currentFewestCandidates = new int[]{x,i};
+//				if (!wasEmpty && candidateArray[x][i].size() == 0) emptyCells--;
+				
+//				wasEmpty = (candidateArray[i][y].size() == 0);
+				candidateArray[i][y].remove(new Integer(value));
+				if (candidateArray[i][y].size() > 0 && candidateArray[i][y].size() < getSmallestNumber()) currentFewestCandidates = new int[]{i,y};
+//				if (!wasEmpty && candidateArray[i][y].size() == 0) emptyCells--;
+			}
+			int bSize = (int) Math.sqrt(size);
+			for (int i = Math.floorDiv(x, bSize)*bSize; i < (Math.floorDiv(x, bSize)*bSize)+bSize; i++) {
+				for (int j = Math.floorDiv(y, bSize)*bSize; j < (Math.floorDiv(y, bSize)*bSize)+bSize; j++) {
+//					wasEmpty = (candidateArray[i][j].size() == 0);
+					candidateArray[i][j].remove(new Integer(value));
+					if (candidateArray[i][j].size() > 0 && candidateArray[i][j].size() < getSmallestNumber()) currentFewestCandidates = new int[]{i,j};
+//					if (!wasEmpty && candidateArray[i][j].size() == 0) emptyCells--;
+				}
+			}
+//			if (emptyCells == 0) solved = true;
+			updateFewestCandidates();
+		}
+		
+		private void updateFewestCandidates() {
+			int smallestNumber = Integer.MAX_VALUE;
+			boolean allFilled = true;
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {
+					if (candidateArray[i][j].size() != 0) {
+						if (candidateArray[i][j].size() < smallestNumber) {
+							smallestNumber = candidateArray[i][j].size();
+							currentFewestCandidates = new int[]{i,j};
+						}
+					}
+					if (current_values[i][j] == 0) allFilled = false;
+				}
+			}
+			if (allFilled) solved = true;
+		}
+
+
+	}
 }
