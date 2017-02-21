@@ -15,16 +15,21 @@ import de.comp16.camelsolver1.Sudoku.InvalidSudokuException;
  */
 public class SudokuSolver {
 	
+	// return values
 	public static final int IMPOSSIBLE = 0;
 	public static final int ONE = 1;
 	public static final int MANY = 2;
-	
-	public static final int DEBUGLEVEL = 9001;
+	// denotes the maximum level of recursion up to which console output is generated 
+	public static final int DEBUGLEVEL = 6;
+	// whether to stop after finding the first solution
+	public static final boolean solveMultiple = false;
 	
 	private Sudoku startSudoku;
 	private int[][] current_values;
 	private int size;
-	private boolean solved = false;
+	private Sudoku solvedSudoku;
+	private boolean solvedMultiple = false;
+	private boolean solvedOnce = false;
 	
 	public SudokuSolver(Sudoku sudoku) {
 		this.current_values = sudoku.getValues();
@@ -42,12 +47,13 @@ public class SudokuSolver {
 	 * @return The current Sudoku
 	 */
 	public Sudoku getCurrentSudoku() {
-		try {
-			return new Sudoku(current_values);
-		} catch (InvalidSudokuException e) {
-			e.printStackTrace();
-			return null; // this should never happen
-		}
+		return solvedSudoku;
+//		try {
+//			return new Sudoku(current_values);
+//		} catch (InvalidSudokuException e) {
+//			e.printStackTrace();
+//			return null; // this should never happen
+//		}
 	}
 
 	/**
@@ -56,13 +62,14 @@ public class SudokuSolver {
 	 */
 	public int solve() {
 		if (startSudoku == null) throw new RuntimeException("solve: no Sudoku given");
-		if (size == 9 && numberGivenCells(startSudoku) < 17) return MANY;
+		if (size >= 9 && numberGivenCells(startSudoku) < 17) return MANY;
 		
 		int[] startingCell = fewestCandidates();
-		if (!solved) fillCell(startingCell[0], startingCell[1], 0);
+		if (!solvedOnce) fillCell(startingCell[0], startingCell[1], 0);
 
-		if (numberDifferentDigits(startSudoku) < size-1 && solved) return MANY;
-		if (solved) return ONE;
+		if (numberDifferentDigits(startSudoku) < size-1 && (solvedMultiple || solvedOnce)) return MANY;
+		if (solvedOnce && solvedMultiple) return MANY;
+		if (solvedMultiple || solvedOnce) return ONE;
 		else return IMPOSSIBLE;
 	}
 	
@@ -111,8 +118,8 @@ public class SudokuSolver {
 			int[] nextCell = fewestCandidates();
 //			System.out.println("[fillCell] next cell: ("+nextCell[0]+","+nextCell[1]+")");
 //			if (nextCell[0] != -1) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
-			if (!solved) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
-			if (!solved) current_values[x][y] = 0;
+			if (!solvedOnce) fillCell(nextCell[0], nextCell[1], recursionLevel+1);
+			if (!solvedOnce) current_values[x][y] = 0;
 		}
 	}
 	
@@ -141,7 +148,19 @@ public class SudokuSolver {
 			}
 		}
 		
-		if (smallestNumber == Integer.MAX_VALUE) solved = true;
+		if (smallestNumber == Integer.MAX_VALUE) {
+			if (!solvedOnce) {
+				solvedOnce = true;
+				try {
+					solvedSudoku = new Sudoku(current_values);
+					System.out.println("Found first solution!\n"+solvedSudoku.toString());
+				} catch (InvalidSudokuException e) {
+					e.printStackTrace(); // should never happen
+				}
+			} else {
+				solvedMultiple = true;
+			}
+		}
 		return coords;
 	}
 
